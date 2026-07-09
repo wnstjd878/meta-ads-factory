@@ -58,7 +58,31 @@ python -c "from guards import guard; guard('POST','act_1/campaigns',{'status':'A
 
 ---
 
+## 받기
+
+**깃허브 계정이 없어도 됩니다.**
+
+1. https://github.com/wnstjd878/meta-ads-factory 접속
+2. 초록색 **Code** 버튼 → **Download ZIP**
+3. 압축을 풀어 원하는 곳에 둡니다 (예: 바탕화면)
+
+계정이 있으면 **Fork** 를 눌러 자기 저장소로 가져가세요. 마음대로 고치셔도
+됩니다.
+
 ## 준비
+
+### 0. 파이썬
+
+파이썬 3.10 이상이 필요합니다. 없으면 python.org 에서 받으세요.
+**설치할 때 "Add Python to PATH" 를 반드시 체크**하세요.
+
+받은 폴더에서 터미널을 열고:
+
+```bash
+pip install -r requirements.txt
+```
+
+`requests` 하나만 깔립니다.
 
 ### 1. 열쇠 두 개
 
