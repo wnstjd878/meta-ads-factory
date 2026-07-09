@@ -21,7 +21,9 @@ import requests
 
 MAX_IMAGES = 8  # 한 번에 이 장수를 넘겨 만들지 않는다. 요금 폭주 방지.
 ENDPOINT = "https://api.openai.com/v1/images/generations"
-MODEL = "gpt-image-1"
+MODEL = "gpt-image-2"   # 2026-07 기준 최신. 한글 오타가 확 줄었다.
+#       모델 목록 확인: GET https://api.openai.com/v1/models
+#       구형(gpt-image-1)은 손글씨 서브 문구에 오타를 냈다.
 SIZE = "1024x1024"  # 정사각형. 피드에서 안 잘린다.
 
 
