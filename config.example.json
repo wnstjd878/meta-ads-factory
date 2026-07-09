@@ -1,0 +1,15 @@
+{
+  "account_name": "내 광고 계정 이름",
+  "product": "무엇을 파는가 (한 줄)",
+  "price": "가격 또는 계약단가",
+  "buyer": "돈 내는 사람",
+  "user": "실제 쓰는 사람 (같으면 '구매자와 동일')",
+  "bep": "결과 1건 손익분기 비용. 예: DB 1건당 $13",
+  "page_id": "",
+  "link_url": "",
+  "pixel_id": "",
+  "event_type": "COMPLETE_REGISTRATION",
+  "country": "KR",
+  "cta_type": "SIGN_UP",
+  "daily_budget_cents": 2000
+}
