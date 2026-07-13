@@ -12,6 +12,7 @@
 """
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -59,8 +60,15 @@ def run(config: dict, out_dir: Path, n_images: int = 6) -> dict:
         n=n_images,
     )
 
+    # 카피는 클로드가 짠다. 기본 모델의 사용 한도가 차면(429) 기획이 통째로
+    # 막힌다. 그때 PLAN_MODEL 환경변수로 다른 모델을 고른다. 예: PLAN_MODEL=opus
+    cmd = ["claude", "-p", prompt, "--output-format", "json"]
+    model = os.environ.get("PLAN_MODEL", "").strip()
+    if model:
+        cmd[1:1] = ["--model", model]
+
     proc = subprocess.run(
-        ["claude", "-p", prompt, "--output-format", "json"],
+        cmd,
         capture_output=True,
         text=True,
         encoding="utf-8",
