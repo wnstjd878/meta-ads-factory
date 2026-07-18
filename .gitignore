@@ -4,3 +4,5 @@ config.local.backup.json
 out/
 __pycache__/
 *.pyc
+refs/*
+!refs/README.txt

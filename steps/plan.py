@@ -23,7 +23,7 @@ PROMPT = """메타 광고 스킬(meta-ads-ops)의 /소재생성 규칙을 그대
 구매자: {buyer}
 사용자: {user}
 손익분기 결과당 비용(BEP): {bep}
-
+{refs}
 스킬 규칙대로 커뮤니티에서 고객 언어를 수집하고, 카피 20개를 만들고,
 5항목 체크리스트로 검수한 뒤, 그중 가장 좋은 {n}개를 골라 이미지 지시문을
 만들어라.
@@ -57,6 +57,7 @@ def run(config: dict, out_dir: Path, n_images: int = 6) -> dict:
         buyer=config["buyer"],
         user=config["user"],
         bep=config["bep"],
+        refs=_load_refs_block(out_dir),
         n=n_images,
     )
 
@@ -105,6 +106,35 @@ def run(config: dict, out_dir: Path, n_images: int = 6) -> dict:
     path = out_dir / "plan.json"
     path.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
     return plan
+
+
+def _load_refs_block(out_dir: Path) -> str:
+    """레퍼런스 해부 결과가 있으면 카피 기획에 넣을 지시 블록을 만든다.
+
+    refs_analysis.json 은 factory.py --benchmark 가 만든다. 없으면 빈 문자열이라
+    기존 동작 그대로다(하위호환).
+    """
+    path = out_dir / "refs_analysis.json"
+    if not path.exists():
+        return ""
+    try:
+        refs = json.loads(path.read_text(encoding="utf-8")).get("refs", [])
+    except (json.JSONDecodeError, OSError):
+        return ""
+    if not refs:
+        return ""
+
+    lines = [
+        "",
+        "아래는 사용자가 고른 '잘 되는 참고 광고'들의 구조 분석이다.",
+        "공통 성공 구조(세계관·타겟·문제·해결·카피 논리·소구·시선 흐름·타겟 언어)를",
+        "이번 카피 기획에 반영해라. 단 문구를 베끼지 마라 — 이식 가능한 구조만 가져와라.",
+        "벤치마크는 따라하기가 아니다.",
+    ]
+    for i, r in enumerate(refs, 1):
+        lines.append(f"[참고 광고 {i}: {r.get('file', '')}]")
+        lines.append(json.dumps(r.get("analysis", {}), ensure_ascii=False))
+    return "\n".join(lines)
 
 
 def _extract_json(stdout: str) -> dict:

@@ -39,11 +39,13 @@ from steps import image as step_image
 from steps import upload as step_upload
 from steps import setup as step_setup
 from steps import report as step_report
+from steps import benchmark as step_benchmark
 
 ROOT = Path(__file__).parent
 OUT = ROOT / "out"
 IMG = OUT / "images"
 VID = OUT / "videos"   # ad-video 로 만든 mp4 를 여기 넣는다
+REFS = ROOT / "refs"   # 잘 되는 참고 광고 이미지를 여기 넣는다 (--benchmark 가 뜯어봄)
 
 
 def load_env() -> None:
@@ -78,8 +80,25 @@ def check_config(config: dict) -> None:
         )
 
 
+def run_benchmark() -> None:
+    """0단계. refs/ 의 참고 광고를 4축7키로 뜯어본다. 그림·계정을 안 건드린다."""
+    REFS.mkdir(exist_ok=True)
+    print("\n[레퍼런스 해부] refs/ 의 참고 광고를 뜯어본다 (계정·요금 무관)")
+    data = step_benchmark.run(REFS, OUT)
+    n = len(data.get("refs", []))
+    if n == 0:
+        print(f"\n  refs/ 에 이미지가 없다:\n  {REFS}")
+        print("  잘 된다고 보는 광고 이미지(png/jpg)를 넣고 다시 실행해라.")
+        return
+    print(f"\n  참고 광고 {n}개 해부 완료 -> out/refs_analysis.json")
+    print("  이제 그림을 뽑으면 이 구조가 카피에 자동으로 반영된다:")
+    print("    python factory.py --images 6")
+
+
 def make_images(config: dict, n_images: int) -> None:
     """1단계. 기획하고 그림을 뽑아 폴더에 저장하고 멈춘다."""
+    if (OUT / "refs_analysis.json").exists():
+        print("[레퍼런스] out/refs_analysis.json 을 카피 기획에 반영한다.")
     print("\n[1/2] 소재 기획")
     plan = step_plan.run(config, OUT, n_images=n_images)
     print(f"      카피 {len(plan['copies'])}개 + 이미지 지시문")
@@ -177,6 +196,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description="소재 공장. 그림을 뽑아 두고, 사람이 본 뒤, 광고로 만든다."
     )
+    ap.add_argument("--benchmark", action="store_true",
+                    help="0단계. refs/ 의 참고 광고를 4축7키로 뜯어본다.")
     ap.add_argument("--setup", action="store_true",
                     help="2단계. 폴더에 남은 그림으로 광고를 만든다.")
     ap.add_argument("--images", type=int, default=6, help="1단계에서 만들 그림 장수")
@@ -184,9 +205,14 @@ def main() -> None:
     args = ap.parse_args()
 
     load_env()
+    OUT.mkdir(exist_ok=True)
+
+    if args.benchmark:
+        run_benchmark()
+        return
+
     config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
     check_config(config)
-    OUT.mkdir(exist_ok=True)
 
     if args.setup:
         setup_ads(config, args.tag)
