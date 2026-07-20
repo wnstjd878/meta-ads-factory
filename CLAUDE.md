@@ -25,8 +25,15 @@
 - `OPENAI_API_KEY` — 그림 생성 열쇠
 
 없으면 `.env.example` 을 복사해 `.env` 를 만들고, 사용자에게 세 열쇠를 직접 넣게 안내한다.
-(토큰 발급: business.facebook.com > 설정 > 시스템 사용자. 파이썬이 없으면 python.org 최신 릴리스 페이지 →
-Files → "Windows installer (64-bit)" .exe 로 설치, "Add python.exe to PATH" 체크. `.msix` 는 피한다.)
+(토큰 발급: business.facebook.com > 설정 > 시스템 사용자.)
+
+### 1-a. 파이썬 확인 / 설치
+`python --version` 으로 파이썬이 있는지 본다. 없으면:
+- **winget 이 있으면(대부분의 PC)**: `winget install Python.Python.3.14 -e --accept-source-agreements --accept-package-agreements` 로 설치한다.
+  설치 뒤 PATH 반영을 위해 "파이썬을 깔았습니다. 클로드 코드를 한 번 껐다 켜 주세요" 라고 안내하고 멈춘다.
+  재시작 후 `python --version` 이 되면 이어간다.
+- **winget 이 없으면(예: Windows 샌드박스)**: 사람이 python.org 최신 릴리스 페이지 → Files →
+  "Windows installer (64-bit)" .exe 로 설치하게 안내한다. "Add python.exe to PATH" 체크, `.msix` 는 피한다.
 
 ### 1-b. 파이썬 환경 준비 (처음 한 번)
 `.venv` 폴더가 없으면 만들고 필요한 도구를 설치한다:
