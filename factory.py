@@ -65,14 +65,18 @@ def check_config(config: dict) -> None:
 
     그림을 다 만들고 나서 "페이지 ID 가 없다"로 멈추면 요금만 나간다.
     """
-    required = ["product", "price", "buyer", "user", "bep",
+    required = ["product", "price", "buyer", "user", "bep", "bep_cents",
                 "page_id", "link_url", "pixel_id", "event_type",
                 "country", "daily_budget_cents"]
     missing = [k for k in required if not config.get(k)]
     if missing:
         raise RuntimeError(f"config.json 에 빠진 값: {', '.join(missing)}")
 
-    bep_cents = int(os.environ["BEP_CENTS"])
+    # 손익분기를 meta.py 가 예산 상한 검사에 쓰도록 넘겨준다.
+    # (예전엔 .env 의 BEP_CENTS 였지만, 상품마다 다르므로 config 로 옮겼다.)
+    os.environ["BEP_CENTS"] = str(config["bep_cents"])
+
+    bep_cents = int(config["bep_cents"])
     if config["daily_budget_cents"] > bep_cents * 7:
         raise RuntimeError(
             f"하루 예산 {config['daily_budget_cents']/100:.2f} 가 "

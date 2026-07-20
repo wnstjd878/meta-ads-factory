@@ -1,7 +1,8 @@
 """
 == 운영 맥락 ==
 실행 시점: factory.py 각 단계에서 호출
-입력: META_ADS_TOKEN, META_AD_ACCOUNT_ID, BEP_CENTS (.env)
+입력: META_ADS_TOKEN, META_AD_ACCOUNT_ID (.env)
+     BEP_CENTS 는 config.json 의 bep_cents 를 factory.check_config 가 넣어준다
 출력: 메타 광고 계정에 이미지·소재·캠페인 생성
 외부 의존: graph.facebook.com (시스템 사용자 토큰)
 의도적 미구현:
@@ -37,7 +38,7 @@ def _token() -> str:
 def _bep_cents() -> int:
     raw = os.environ.get("BEP_CENTS")
     if not raw:
-        raise RuntimeError("BEP_CENTS 가 없다. 손익분기 결과당 비용을 센트로. ($13 이면 1300)")
+        raise RuntimeError("손익분기(bep_cents)를 못 찾았다. config.json 에 넣어라. factory 가 넘겨준다.")
     return int(raw)
 
 
