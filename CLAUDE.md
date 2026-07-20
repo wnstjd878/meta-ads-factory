@@ -28,6 +28,11 @@
 (토큰 발급: business.facebook.com > 설정 > 시스템 사용자. 파이썬이 없으면 python.org 최신 릴리스 페이지 →
 Files → "Windows installer (64-bit)" .exe 로 설치, "Add python.exe to PATH" 체크. `.msix` 는 피한다.)
 
+### 1-b. 파이썬 환경 준비 (처음 한 번)
+`.venv` 폴더가 없으면 만들고 필요한 도구를 설치한다:
+`python -m venv .venv` → `.venv\Scripts\activate` → `pip install -r requirements.txt`
+이후 python 명령은 이 환경에서 실행한다. (터미널을 새로 열면 `.venv\Scripts\activate` 를 다시 친다.)
+
 ### 2. 사업 정보 세팅 (config.json 을 대화로 채운다)
 `config.json` 이 없거나 아직 예시값(`config.example.json` 과 같음)이면, **사용자와 대화로 하나씩 물어서** 채운다.
 한꺼번에 다 묻지 말고, 모르면 광고 관리자 어디서 찾는지 알려주며 진행한다.
