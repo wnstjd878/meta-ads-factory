@@ -91,8 +91,7 @@ def run_benchmark() -> None:
         print("  잘 된다고 보는 광고 이미지(png/jpg)를 넣고 다시 실행해라.")
         return
     print(f"\n  참고 광고 {n}개 해부 완료 -> out/refs_analysis.json")
-    print("  이제 그림을 뽑으면 이 구조가 카피에 자동으로 반영된다:")
-    print("    python factory.py   (메뉴에서 1번)")
+    print("  이제 메뉴에서 1번(카피+그림)을 고르면 이 구조가 카피에 반영된다.")
 
 
 def make_images(config: dict, n_images: int) -> None:
@@ -109,8 +108,7 @@ def make_images(config: dict, n_images: int) -> None:
 
     print(f"\n그림을 폴더에서 눈으로 확인해라:\n  {IMG}")
     print("\n마음에 안 드는 그림은 그 PNG 파일을 지워라. 남은 것만 광고가 된다.")
-    print("확인이 끝나면 광고를 만든다:")
-    print("  python factory.py   (메뉴에서 2번)")
+    print("확인이 끝나면 메뉴에서 2번(광고 만들기)을 고른다.")
 
 
 def load_checked() -> tuple[list[dict], list[dict]]:
