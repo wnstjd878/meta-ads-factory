@@ -92,7 +92,7 @@ def run_benchmark() -> None:
         return
     print(f"\n  참고 광고 {n}개 해부 완료 -> out/refs_analysis.json")
     print("  이제 그림을 뽑으면 이 구조가 카피에 자동으로 반영된다:")
-    print("    python factory.py --images 6")
+    print("    python factory.py   (메뉴에서 1번)")
 
 
 def make_images(config: dict, n_images: int) -> None:
@@ -109,8 +109,8 @@ def make_images(config: dict, n_images: int) -> None:
 
     print(f"\n그림을 폴더에서 눈으로 확인해라:\n  {IMG}")
     print("\n마음에 안 드는 그림은 그 PNG 파일을 지워라. 남은 것만 광고가 된다.")
-    print("확인이 끝나면 이 명령으로 광고를 만든다:")
-    print("  python factory.py --setup")
+    print("확인이 끝나면 광고를 만든다:")
+    print("  python factory.py   (메뉴에서 2번)")
 
 
 def load_checked() -> tuple[list[dict], list[dict]]:
@@ -192,6 +192,34 @@ def setup_ads(config: dict, tag: str) -> None:
     print("광고 관리자에서 켤 것만 켜라.")
 
 
+def _interactive_choose(args) -> bool:
+    """아무것도 안 붙이고 그냥 실행하면 뜨는 번호 메뉴.
+
+    영어 플래그(--benchmark 등)를 몰라도 번호만 고르면 된다.
+    고른 대로 args 를 채워서 돌려준다. 잘못 고르면 False.
+    """
+    print("\n무엇을 할까요?")
+    print("  0. 참고 광고 분석 (refs 폴더)")
+    print("  1. 카피 + 그림 뽑기")
+    print("  2. 광고 만들기 (꺼진 채로)")
+    choice = input("번호: ").strip()
+
+    if choice == "0":
+        args.benchmark = True
+    elif choice == "1":
+        n = input("몇 장 뽑을까요? (엔터 = 6) ").strip()
+        args.images = int(n) if n.isdigit() and int(n) > 0 else 6
+    elif choice == "2":
+        tag = input("이름표를 붙일까요? (엔터 = 자동) ").strip()
+        args.setup = True
+        if tag:
+            args.tag = tag
+    else:
+        print("0, 1, 2 중에서 골라라.")
+        return False
+    return True
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(
         description="소재 공장. 그림을 뽑아 두고, 사람이 본 뒤, 광고로 만든다."
@@ -206,6 +234,12 @@ def main() -> None:
 
     load_env()
     OUT.mkdir(exist_ok=True)
+
+    # 아무 플래그 없이 그냥 실행하면 번호 메뉴를 띄운다.
+    # 자동 실행(스케줄러)은 아래 플래그를 그대로 쓴다.
+    if len(sys.argv) == 1:
+        if not _interactive_choose(args):
+            return
 
     if args.benchmark:
         run_benchmark()
