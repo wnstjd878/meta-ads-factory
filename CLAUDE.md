@@ -107,8 +107,13 @@ factory 폴더로 이동한 뒤, `.venv` 폴더가 없으면 만들고 도구를
 - `.venv\Scripts\python.exe demo_guard.py` — 안전장치가 위험한 호출을 막는지
 
 ### 4. 소재 만들기
-- (선택) 참고 광고가 있으면 factory 폴더의 `refs` 에 넣게 한다(**절대경로를 알려줘라**) →
-  `.venv\Scripts\python.exe factory.py --benchmark`
+- (선택) 참고 광고 분석. 넣는 방법은 둘 다 된다:
+  - 사용자가 factory 폴더의 `refs` 에 직접 넣는다(**절대경로를 알려줘라**), 또는
+  - **사용자가 이미지를 채팅에 끌어다 놓거나 경로를 주면, 네가 그 파일을 `refs` 폴더로 복사한다.**
+  그다음 반드시 `.venv\Scripts\python.exe factory.py --benchmark` 를 실행한다.
+
+  **네가 눈으로 보고 분석하는 것으로 끝내지 마라.** 카피 생성(plan.py)은 `out/refs_analysis.json` 을
+  읽는다. `--benchmark` 를 돌려 그 파일을 만들어야 참고 광고 구조가 카피에 실제로 반영된다.
 - `.venv\Scripts\python.exe factory.py --images N` (N = 사용자가 말한 장수). 콘텐츠가 `out/images` 에 생긴다.
 - **여기서 멈추고 사용자에게 `out/images` 폴더를 열어 콘텐츠를 직접 보라고 한다**(절대경로를 알려줘라).
   이상한 콘텐츠는 그 파일을 지우게 한다.
