@@ -1,15 +1,15 @@
 """
 == 운영 맥락 ==
 실행 시점: 사람이 직접. 두 번에 나눠 친다.
-  1) python factory.py --images 6      기획 + 그림 -> out/images/ 에 저장하고 멈춤
-     (여기서 사람이 그림을 눈으로 본다. 마음에 안 드는 건 파일을 지운다)
+  1) python factory.py --images 6      기획 + 콘텐츠 -> out/images/ 에 저장하고 멈춤
+     (여기서 사람이 콘텐츠를 눈으로 본다. 마음에 안 드는 건 파일을 지운다)
   2) python factory.py --setup         남은 소재만 광고 계정에 올리고 111 캠페인
 입력: config.json, .env
      out/videos/NN.mp4 (선택) — ad-video 로 만든 영상. NN 은 카피 번호
 출력: out/images/*.png, out/plan.json, out/results.json, out/보고서.html
-외부 의존: claude 실행 파일, 그림 생성 서비스, graph.facebook.com
+외부 의존: claude 실행 파일, 콘텐츠 생성 서비스, graph.facebook.com
 의도적 미구현:
-  - 그림을 뽑자마자 바로 세팅하는 한 방 실행. 그림은 확률이라 사람이 봐야 한다.
+  - 콘텐츠를 뽑자마자 바로 세팅하는 한 방 실행. 콘텐츠는 확률이라 사람이 봐야 한다.
     한 번에 돌리고 싶어도 만들지 말 것. 이 두 단계 구조가 안전장치다.
   - 영상 생성. 영상은 ad-video(Mac, Remotion)가 만든다. 여기는 올리고 세팅만.
   - 영상 광고 문구 생성. plan.json 의 카피(후킹/서브/버튼)를 그대로 쓴다.
@@ -21,7 +21,7 @@
 마지막 점검: 2026-07-09
 
 돈이 나가는 경로:
-  1) 그림 생성: 장당 요금. image.py MAX_IMAGES 로 상한.
+  1) 콘텐츠 생성: 장당 요금. image.py MAX_IMAGES 로 상한.
   2) 광고 집행: 만들기만 하고 켜지 않으므로 0원. guards.py 가 켜진 생성을 막는다.
 """
 
@@ -63,7 +63,7 @@ def load_env() -> None:
 def check_config(config: dict) -> None:
     """세팅 단계에서 필요한 값이 빠졌는지 미리 본다.
 
-    그림을 다 만들고 나서 "페이지 ID 가 없다"로 멈추면 요금만 나간다.
+    콘텐츠를 다 만들고 나서 "페이지 ID 가 없다"로 멈추면 요금만 나간다.
     """
     required = ["product", "price", "buyer", "user", "bep", "bep_cents",
                 "page_id", "link_url", "pixel_id", "event_type",
@@ -85,7 +85,7 @@ def check_config(config: dict) -> None:
 
 
 def run_benchmark() -> None:
-    """0단계. refs/ 의 참고 광고를 4축7키로 뜯어본다. 그림·계정을 안 건드린다."""
+    """0단계. refs/ 의 참고 광고를 4축7키로 뜯어본다. 콘텐츠·계정을 안 건드린다."""
     REFS.mkdir(exist_ok=True)
     print("\n[레퍼런스 해부] refs/ 의 참고 광고를 뜯어본다 (계정·요금 무관)")
     data = step_benchmark.run(REFS, OUT)
@@ -95,28 +95,28 @@ def run_benchmark() -> None:
         print("  잘 된다고 보는 광고 이미지(png/jpg)를 넣고 다시 실행해라.")
         return
     print(f"\n  참고 광고 {n}개 해부 완료 -> out/refs_analysis.json")
-    print("  이제 메뉴에서 1번(카피+그림)을 고르면 이 구조가 카피에 반영된다.")
+    print("  이제 메뉴에서 1번(카피+콘텐츠)을 고르면 이 구조가 카피에 반영된다.")
 
 
 def make_images(config: dict, n_images: int) -> None:
-    """1단계. 기획하고 그림을 뽑아 폴더에 저장하고 멈춘다."""
+    """1단계. 기획하고 콘텐츠를 뽑아 폴더에 저장하고 멈춘다."""
     if (OUT / "refs_analysis.json").exists():
         print("[레퍼런스] out/refs_analysis.json 을 카피 기획에 반영한다.")
     print("\n[1/2] 소재 기획")
     plan = step_plan.run(config, OUT, n_images=n_images)
     print(f"      카피 {len(plan['copies'])}개 + 이미지 지시문")
 
-    print("\n[2/2] 그림 생성 (요금 발생)")
+    print("\n[2/2] 콘텐츠 생성 (요금 발생)")
     made = step_image.run(plan, OUT)
     print(f"      {len(made)}장 완성")
 
-    print(f"\n그림을 폴더에서 눈으로 확인해라:\n  {IMG}")
-    print("\n마음에 안 드는 그림은 그 PNG 파일을 지워라. 남은 것만 광고가 된다.")
+    print(f"\n콘텐츠를 폴더에서 눈으로 확인해라:\n  {IMG}")
+    print("\n마음에 안 드는 콘텐츠는 그 PNG 파일을 지워라. 남은 것만 광고가 된다.")
     print("확인이 끝나면 메뉴에서 2번(광고 만들기)을 고른다.")
 
 
 def load_checked() -> tuple[list[dict], list[dict]]:
-    """2단계. 사람이 확인하고 남겨둔 그림과 영상을 가져온다.
+    """2단계. 사람이 확인하고 남겨둔 콘텐츠와 영상을 가져온다.
 
     파일을 지운 소재는 자동으로 빠진다. 그게 검수다.
 
@@ -126,7 +126,7 @@ def load_checked() -> tuple[list[dict], list[dict]]:
     plan_path = OUT / "plan.json"
     if not plan_path.exists():
         raise RuntimeError(
-            "out/plan.json 이 없다. 먼저 카피와 그림부터 만들어라:\n"
+            "out/plan.json 이 없다. 먼저 카피와 콘텐츠부터 만들어라:\n"
             "  python factory.py --images 6"
         )
 
@@ -165,9 +165,9 @@ def load_checked() -> tuple[list[dict], list[dict]]:
 
 
 def setup_ads(config: dict, tag: str) -> None:
-    """2단계. 사람이 통과시킨 그림과 영상으로 광고를 만든다."""
+    """2단계. 사람이 통과시킨 콘텐츠와 영상으로 광고를 만든다."""
     images, videos = load_checked()
-    print(f"\n사람이 통과시킨 소재: 그림 {len(images)}장, 영상 {len(videos)}개")
+    print(f"\n사람이 통과시킨 소재: 콘텐츠 {len(images)}장, 영상 {len(videos)}개")
 
     uploaded = []
 
@@ -202,7 +202,7 @@ def _interactive_choose(args) -> bool:
     """
     print("\n무엇을 할까요?")
     print("  0. 참고 광고 분석 (refs 폴더)")
-    print("  1. 카피 + 그림 뽑기")
+    print("  1. 카피 + 콘텐츠 뽑기")
     print("  2. 광고 만들기 (꺼진 채로)")
     choice = input("번호: ").strip()
 
@@ -224,13 +224,13 @@ def _interactive_choose(args) -> bool:
 
 def main() -> None:
     ap = argparse.ArgumentParser(
-        description="소재 공장. 그림을 뽑아 두고, 사람이 본 뒤, 광고로 만든다."
+        description="소재 공장. 콘텐츠를 뽑아 두고, 사람이 본 뒤, 광고로 만든다."
     )
     ap.add_argument("--benchmark", action="store_true",
                     help="0단계. refs/ 의 참고 광고를 4축7키로 뜯어본다.")
     ap.add_argument("--setup", action="store_true",
-                    help="2단계. 폴더에 남은 그림으로 광고를 만든다.")
-    ap.add_argument("--images", type=int, default=6, help="1단계에서 만들 그림 장수")
+                    help="2단계. 폴더에 남은 콘텐츠로 광고를 만든다.")
+    ap.add_argument("--images", type=int, default=6, help="1단계에서 만들 콘텐츠 장수")
     ap.add_argument("--tag", default="자동", help="캠페인 이름 앞에 붙일 표시")
     args = ap.parse_args()
 
