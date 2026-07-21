@@ -1,9 +1,15 @@
 """
 == 운영 맥락 ==
-실행 시점: 사람이 직접. 두 번에 나눠 친다.
-  1) python factory.py --images 6      기획 + 콘텐츠 -> out/images/ 에 저장하고 멈춤
+실행 시점: 사람이 직접. 세 번에 나눠 친다.
+  1) python factory.py --plan          기획안만 -> out/기획안.html 로 보고 멈춤
+     (여기서 사람이 카피를 고치고, 쓸 번호를 고른다. 그림 요금이 안 나간다)
+  2) python factory.py --images --only 1,4,9
+                                       고른 번호만 콘텐츠 -> out/images/ 에 저장하고 멈춤
      (여기서 사람이 콘텐츠를 눈으로 본다. 마음에 안 드는 건 파일을 지운다)
-  2) python factory.py --setup         남은 소재만 광고 계정에 올리고 111 캠페인
+  3) python factory.py --setup         남은 소재만 광고 계정에 올리고 111 캠페인
+
+  `--images N` 처럼 장수를 붙이면 기획부터 새로 해서 N개를 뽑는다(옛 흐름).
+  스케줄러 자동 실행이 이걸 쓴다. 사람이 손으로 할 땐 1)부터 하는 게 낫다.
 입력: config.json, .env
      out/videos/NN.mp4 (선택) — ad-video 로 만든 영상. NN 은 카피 번호
 출력: out/images/*.png, out/plan.json, out/results.json, out/보고서.html
@@ -98,12 +104,34 @@ def run_benchmark() -> None:
     print("  이제 메뉴에서 1번(카피+콘텐츠)을 고르면 이 구조가 카피에 반영된다.")
 
 
-def make_images(config: dict, n_images: int) -> None:
-    """1단계. 기획하고 콘텐츠를 뽑아 폴더에 저장하고 멈춘다."""
+def make_plan(config: dict) -> None:
+    """1단계. 기획안만 만들고 멈춘다. 그림을 안 그리니 그림 요금이 없다."""
     if (OUT / "refs_analysis.json").exists():
         print("[레퍼런스] out/refs_analysis.json 을 카피 기획에 반영한다.")
-    print("\n[1/2] 소재 기획")
-    plan = step_plan.run(config, OUT, n_images=n_images)
+    print(f"\n[기획] {config.get('plan_prompt', '포맷집중형')} 프롬프트로 기획안을 만든다")
+    plan = step_plan.run_plan(config, OUT)
+    print(f"      카피 {len(plan['copies'])}개")
+
+    print(f"\n기획안을 열어서 봐라:\n  {OUT / '기획안.html'}")
+    print("\n고칠 게 있으면 지금 고쳐라. 아직 그림을 안 그려서 요금이 안 나갔다.")
+    print("쓸 번호를 고른 뒤 그 번호만 그림으로 만든다:")
+    print("  python factory.py --images --only 1,4,9")
+
+
+def make_images(config: dict, n_images: int, picks: list[int]) -> None:
+    """2단계 앞부분. 고른 번호만 콘텐츠를 뽑아 폴더에 저장하고 멈춘다.
+
+    n_images 가 0 이면 이미 있는 기획안을 쓴다(사람이 고친 것이 살아 있다).
+    0 보다 크면 기획부터 새로 한다(옛 흐름. 스케줄러가 이걸 쓴다).
+    """
+    if n_images > 0:
+        if (OUT / "refs_analysis.json").exists():
+            print("[레퍼런스] out/refs_analysis.json 을 카피 기획에 반영한다.")
+        print("\n[1/2] 소재 기획")
+        plan = step_plan.run(config, OUT, n_images=n_images)
+    else:
+        print("\n[1/2] 기획안에서 고른 번호의 이미지 지시문 만들기")
+        plan = step_plan.make_image_prompts(config, OUT, picks)
     print(f"      카피 {len(plan['copies'])}개 + 이미지 지시문")
 
     print("\n[2/2] 콘텐츠 생성 (요금 발생)")
@@ -112,7 +140,7 @@ def make_images(config: dict, n_images: int) -> None:
 
     print(f"\n콘텐츠를 폴더에서 눈으로 확인해라:\n  {IMG}")
     print("\n마음에 안 드는 콘텐츠는 그 PNG 파일을 지워라. 남은 것만 광고가 된다.")
-    print("확인이 끝나면 메뉴에서 2번(광고 만들기)을 고른다.")
+    print("확인이 끝나면 메뉴에서 3번(광고 만들기)을 고른다.")
 
 
 def load_checked() -> tuple[list[dict], list[dict]]:
@@ -126,14 +154,18 @@ def load_checked() -> tuple[list[dict], list[dict]]:
     plan_path = OUT / "plan.json"
     if not plan_path.exists():
         raise RuntimeError(
-            "out/plan.json 이 없다. 먼저 카피와 콘텐츠부터 만들어라:\n"
-            "  python factory.py --images 6"
+            "out/plan.json 이 없다. 먼저 기획안부터 만들어라:\n"
+            "  python factory.py --plan"
         )
 
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     images, videos, dropped = [], [], []
 
     for c in plan["copies"]:
+        # 지시문이 없는 카피는 애초에 그림을 만들지 않은 것이다.
+        # 사람이 안 고른 기획안이라, 지운 소재로 세지 않는다.
+        if not c.get("image_prompt"):
+            continue
         png = IMG / f"{c['no']:02d}.png"
         mp4 = VID / f"{c['no']:02d}.mp4"
         if mp4.exists():
@@ -159,7 +191,7 @@ def load_checked() -> tuple[list[dict], list[dict]]:
         raise RuntimeError(
             f"{IMG} 와 {VID} 에 쓸 소재가 하나도 없다.\n"
             "전부 지웠거나 아직 안 만들었다. 다시 만들려면:\n"
-            "  python factory.py --images 6"
+            "  python factory.py --images --only 1,4,9"
         )
     return images, videos
 
@@ -202,24 +234,42 @@ def _interactive_choose(args) -> bool:
     """
     print("\n무엇을 할까요?")
     print("  0. 참고 광고 분석 (refs 폴더)")
-    print("  1. 카피 + 콘텐츠 뽑기")
-    print("  2. 광고 만들기 (꺼진 채로)")
+    print("  1. 기획안 만들기 (그림 없음, 요금 거의 0)")
+    print("  2. 고른 번호만 콘텐츠 뽑기")
+    print("  3. 광고 만들기 (꺼진 채로)")
     choice = input("번호: ").strip()
 
     if choice == "0":
         args.benchmark = True
     elif choice == "1":
-        n = input("몇 장 뽑을까요? (엔터 = 6) ").strip()
-        args.images = int(n) if n.isdigit() and int(n) > 0 else 6
+        args.plan = True
     elif choice == "2":
+        only = input("몇 번을 뽑을까요? (예: 1,4,9 / 엔터 = 전부) ").strip()
+        args.images = 0
+        args.only = only
+    elif choice == "3":
         tag = input("이름표를 붙일까요? (엔터 = 자동) ").strip()
         args.setup = True
         if tag:
             args.tag = tag
     else:
-        print("0, 1, 2 중에서 골라라.")
+        print("0, 1, 2, 3 중에서 골라라.")
         return False
     return True
+
+
+def parse_only(text: str) -> list[int]:
+    """--only 1,4,9 를 번호 목록으로. 빈 값이면 빈 목록(= 전부)."""
+    if not text:
+        return []
+    nums = []
+    for part in re.split(r"[,\s]+", text.strip()):
+        if not part:
+            continue
+        if not part.isdigit():
+            raise RuntimeError(f"--only 는 숫자만 쓴다: {part}")
+        nums.append(int(part))
+    return nums
 
 
 def main() -> None:
@@ -228,9 +278,15 @@ def main() -> None:
     )
     ap.add_argument("--benchmark", action="store_true",
                     help="0단계. refs/ 의 참고 광고를 4축7키로 뜯어본다.")
+    ap.add_argument("--plan", action="store_true",
+                    help="1단계. 기획안만 만든다. 그림을 안 그린다.")
     ap.add_argument("--setup", action="store_true",
-                    help="2단계. 폴더에 남은 콘텐츠로 광고를 만든다.")
-    ap.add_argument("--images", type=int, default=6, help="1단계에서 만들 콘텐츠 장수")
+                    help="3단계. 폴더에 남은 콘텐츠로 광고를 만든다.")
+    ap.add_argument("--images", type=int, nargs="?", const=0, default=None,
+                    help="2단계. 그냥 붙이면 기획안에서 고른 번호만 그린다. "
+                         "숫자를 붙이면 기획부터 새로 해서 그 장수를 뽑는다(옛 흐름).")
+    ap.add_argument("--only", default="",
+                    help="그림으로 만들 기획안 번호. 예: --only 1,4,9")
     ap.add_argument("--tag", default="자동", help="캠페인 이름 앞에 붙일 표시")
     args = ap.parse_args()
 
@@ -252,8 +308,16 @@ def main() -> None:
 
     if args.setup:
         setup_ads(config, args.tag)
+    elif args.plan:
+        make_plan(config)
+    elif args.images is not None:
+        make_images(config, args.images, parse_only(args.only))
     else:
-        make_images(config, args.images)
+        print("무엇을 할지 골라라:")
+        print("  python factory.py --plan                  기획안 만들기")
+        print("  python factory.py --images --only 1,4,9   고른 번호만 콘텐츠")
+        print("  python factory.py --setup                 광고 만들기")
+        print("  python factory.py --benchmark             참고 광고 분석")
 
 
 if __name__ == "__main__":
